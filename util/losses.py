@@ -36,6 +36,7 @@ class DistillationLoss(torch.nn.Module):
             outputs, outputs_kd = outputs
         base_loss = self.base_criterion(outputs, labels)
         if self.distillation_type == 'none':
+            #print("self.distillation_type == 'none'*****************")
             return base_loss
 
         if outputs_kd is None:

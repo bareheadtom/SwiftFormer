@@ -59,12 +59,16 @@ def build_dataset(is_train, args):
 
     if args.data_set == 'CIFAR':
         dataset = datasets.CIFAR100(
-            args.data_path, train=is_train, transform=transform)
+            args.data_path, train=is_train,download = False, transform=transform)
         nb_classes = 100
     elif args.data_set == 'IMNET':
         root = os.path.join(args.data_path, 'train' if is_train else 'val')
         dataset = datasets.ImageFolder(root, transform=transform)
         nb_classes = 1000
+    elif args.data_set == 'IMNET200':
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = datasets.ImageFolder(root, transform=transform)
+        nb_classes = 200
     elif args.data_set == 'FLOWERS':
         root = os.path.join(args.data_path, 'train' if is_train else 'test')
         dataset = datasets.ImageFolder(root, transform=transform)

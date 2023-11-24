@@ -176,7 +176,7 @@ def get_args_parser():
 def main(args):
     utils.init_distributed_mode(args)
 
-    print(args)
+    print("args",args)
 
     if args.distillation_type != 'none' and args.finetune and not args.eval:
         raise NotImplementedError(
@@ -305,7 +305,7 @@ def main(args):
     teacher_model = None
     if args.distillation_type != 'none':
         assert args.teacher_path, 'need to specify teacher-path when using distillation'
-        print(f"Creating teacher model: {args.teacher_model}")
+        print(f"!!!!Creating teacher model: {args.teacher_model}")
         teacher_model = create_model(
             args.teacher_model,
             pretrained=False,
@@ -324,6 +324,7 @@ def main(args):
     # Wrap the criterion in our custom DistillationLoss, which
     # just dispatches to the original criterion if args.distillation_type is
     # 'none'
+    print("****DistillationLoss")
     criterion = DistillationLoss(
         criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau
     )
@@ -409,4 +410,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    args.distillation_type = 'none'
     main(args)

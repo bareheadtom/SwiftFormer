@@ -57,8 +57,11 @@ class Embedding(nn.Module):
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def forward(self, x):
+        #print("input",x.shape)
         x = self.proj(x)
+        #print("proj",x.shape)
         x = self.norm(x)
+        #print("norm",x.shape)
         return x
 
 
@@ -158,25 +161,35 @@ class EfficientAdditiveAttnetion(nn.Module):
 
     def forward(self, x):
         query = self.to_query(x)
+        #print("query",query.shape)
         key = self.to_key(x)
+        #print("key", key.shape)
 
         query = torch.nn.functional.normalize(query, dim=-1) #BxNxD
+        #print("query",query.shape)
         key = torch.nn.functional.normalize(key, dim=-1) #BxNxD
+        #print("key", key.shape)
 
         query_weight = query @ self.w_g # BxNx1 (BxNxD @ Dx1)
+        #print("query_weight", query_weight.shape)
         A = query_weight * self.scale_factor # BxNx1
 
         A = torch.nn.functional.normalize(A, dim=1) # BxNx1
 
+        #print("A", A.shape)
         G = torch.sum(A * query, dim=1) # BxD
+        #print("G", G.shape)
 
         G = einops.repeat(
             G, "b d -> b repeat d", repeat=key.shape[1]
         ) # BxNxD
+        #print("G repeat", G.shape)
 
         out = self.Proj(G * key) + query #BxNxD
+        #print("out", out.shape)
 
         out = self.final(out) # BxNxD
+        #print("out", out.shape)
 
         return out
 
@@ -430,14 +443,18 @@ class SwiftFormer(nn.Module):
         if self.fork_feat:
             # Output features of four stages for dense prediction
             return x
+        #print("self.dist",self.dist,"forward",x.shape)
 
         x = self.norm(x)
         if self.dist:
+            #print("x.flatten(2).mean(-1).shape",x.flatten(2).mean(-1).shape)
             cls_out = self.head(x.flatten(2).mean(-1)), self.dist_head(x.flatten(2).mean(-1))
             if not self.training:
                 cls_out = (cls_out[0] + cls_out[1]) / 2
         else:
-            cls_out = self.head(x.mean(-2))
+            #print("(x.mean(-2)",(x.mean(-2).shape))
+            #cls_out = self.head(x.mean(-2))
+            cls_out = self.head(x.flatten(2).mean(-1))
         # For image classification
         return cls_out
 
