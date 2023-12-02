@@ -13,6 +13,7 @@ from swiftformer import Stage
 from swiftformer import SwiftFormer_depth
 from swiftformer import SwiftFormer_width
 from swiftformer import SwiftFormer
+import einops
 
 class TestSwiftFormer(unittest.TestCase):
     def setUp(self):
@@ -106,6 +107,63 @@ class TestSwiftFormer(unittest.TestCase):
         output = model(input_data)
         print(output.shape)
         self.assertEqual(output.shape, (batch_size, seq_length, 128))
+    
+    def test_EfficientAdditiveAttnetion_imlp(self):
+        print("\n***test_EfficientAdditiveAttnetion_imlp")
+        batch_size = 2
+        seq_length = 4
+        in_dim = 512
+        head_dim = 128
+        num_head = 2
+        x = torch.randn(batch_size, seq_length, in_dim)
+        print("x",x.shape)
+        qliner = nn.Linear(in_dim, head_dim*num_head)
+        kliner = nn.Linear(in_dim, head_dim*num_head)
+        global_proj = nn.Linear(head_dim*num_head,head_dim*num_head)
+        final_proj = nn.Linear(head_dim*num_head,head_dim)
+        Q = qliner(x)
+        Q = torch.nn.functional.normalize(Q, dim = -1)
+        K = kliner(x)
+        K = torch.nn.functional.normalize(K, dim = -1)
+        print("Q",Q.shape, "K", K.shape)
+
+        w = nn.Parameter(torch.randn(head_dim*num_head, 1))
+        a = torch.matmul(Q, w)/(head_dim**0.05)
+        print("a",a.shape)
+        a = torch.nn.functional.normalize(a, dim = 1)
+        q = a * Q
+        print("q",q.shape)
+        q = torch.sum(q, dim = 1)
+
+        print("q",q.shape)
+        q = einops.repeat(
+            q, "b d -> b repeat d", repeat=K.shape[1]
+        )
+        print("q",q.shape)
+        global_context = global_proj(q * K) + K
+        print("global_context",global_context.shape)
+        out = final_proj(global_context)
+        print("out",out.shape)
+    
+    def test_einopsrepea(self):
+        print("\n***test_einopsrepea")
+        t1 = torch.tensor([[1,2,3],[4,5,6],[7,8,9],[10,11,12]])
+        t1 = einops.repeat(
+            t1, "b d -> b repeat d", repeat=2
+        )
+        print(t1)
+        t1 = torch.tensor([[1],[2],[3],[4]])
+        t2 = torch.tensor([[1,1,1],[1,1,1],[1,1,1],[1,1,1]])
+        print(t1*t2)
+        print((t1*t2).shape)
+        t1 = torch.tensor([1,2,3])
+        t1 = einops.repeat(
+            t1, "d ->  repeat d", repeat=4
+        )
+        print(t1.shape)
+        print(t1*t2)
+
+
     
     def test_SwiftFormerLocalRepresentation(self):
         print("\n***test_SwiftFormerLocalRepresentation")

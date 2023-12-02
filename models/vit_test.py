@@ -1,7 +1,10 @@
 import torch
 import unittest
+from torch import nn
 from vit import ViT
-from vit import *
+from einops import rearrange, repeat
+from einops.layers.torch import Rearrange
+from vit import FeedForward, Attention, Transformer, ViT
 
 class TestViT(unittest.TestCase):
     def setUp(self):
@@ -60,6 +63,22 @@ class TestViT(unittest.TestCase):
         input_data = torch.randn(batch_size, seq_length, dim)
         out = model(input_data)
         print(out.shape)
+
+        norm = nn.LayerNorm(64)
+        to_qkv = nn.Linear(64, 48 * 8 * 3, bias = False)
+        qkv = to_qkv(norm(input_data))
+        print("qkv",qkv.shape)
+        qkv = qkv.chunk(3, dim = -1)
+        print("qkvlen",len(qkv))
+        q1, k1, v1 = qkv
+        print(q1.shape, k1.shape, v1.shape)
+        req1 = rearrange(q1, 'b n (h d) -> b h n d', h = self.heads)
+        rek1 = rearrange(k1, 'b n (h d) -> b h n d', h = self.heads)
+        rev1 = rearrange(v1, 'b n (h d) -> b h n d', h = self.heads)
+        print("req1rek1rev1",req1.shape, rek1.shape, rev1.shape)
+    
+        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = self.heads), qkv)
+        print("qkv",q.shape, k.shape, v.shape)
     
     def test_TransformerEncode(self):
         print("\n***test_TransformerEncode")

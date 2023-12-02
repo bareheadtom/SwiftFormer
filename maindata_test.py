@@ -17,6 +17,9 @@ from timm.utils import NativeScaler, get_state_dict, ModelEma
 from util import *
 from models import *
 
+# # python -m torch.distributed.launch --nproc_per_node=4 --use_env maindata_test.py
+
+
 def get_args_parser1():
     parser = argparse.ArgumentParser(
         'SwiftFormer training and evaluation script', add_help=False)

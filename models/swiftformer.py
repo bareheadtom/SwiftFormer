@@ -160,36 +160,38 @@ class EfficientAdditiveAttnetion(nn.Module):
         self.final = nn.Linear(token_dim * num_heads, token_dim)
 
     def forward(self, x):
+        print("x",x.shape)
         query = self.to_query(x)
-        #print("query",query.shape)
+        print("query",query.shape)
         key = self.to_key(x)
-        #print("key", key.shape)
+        print("key", key.shape)
 
         query = torch.nn.functional.normalize(query, dim=-1) #BxNxD
-        #print("query",query.shape)
+        print("query",query.shape)
         key = torch.nn.functional.normalize(key, dim=-1) #BxNxD
-        #print("key", key.shape)
+        print("key", key.shape)
 
         query_weight = query @ self.w_g # BxNx1 (BxNxD @ Dx1)
-        #print("query_weight", query_weight.shape)
+        print("query_weight", query_weight.shape)
         A = query_weight * self.scale_factor # BxNx1
 
         A = torch.nn.functional.normalize(A, dim=1) # BxNx1
 
-        #print("A", A.shape)
+        print("A", A.shape)
+        print("A * query", A.shape, query.shape, (A * query).shape)
         G = torch.sum(A * query, dim=1) # BxD
-        #print("G", G.shape)
+        print("G", G.shape)
 
         G = einops.repeat(
             G, "b d -> b repeat d", repeat=key.shape[1]
         ) # BxNxD
-        #print("G repeat", G.shape)
+        print("G repeat", G.shape)
 
         out = self.Proj(G * key) + query #BxNxD
-        #print("out", out.shape)
+        print("out", out.shape)
 
         out = self.final(out) # BxNxD
-        #print("out", out.shape)
+        print("out", out.shape)
 
         return out
 

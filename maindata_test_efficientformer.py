@@ -18,7 +18,7 @@ from util import *
 from models import *
 from models.vit import ViT
 
-# # python -m torch.distributed.launch --nproc_per_node=4 --use_env maindata_test_vit.py
+# python -m torch.distributed.launch --nproc_per_node=4 --use_env maindata_test_efficientformer.py
 
 def get_args_parser1():
     parser = argparse.ArgumentParser(
@@ -247,16 +247,14 @@ def main(args):
     #     pretrained=args.eval,
     #     fuse=args.eval,
     # )
-    print("creating model :Vit")
-    model = ViT(image_size=(224, 224), 
-                    patch_size=8, 
-                    num_classes=args.nb_classes, 
-                    dim=48, 
-                    depth=3,
-                    heads=8,
-                    mlp_dim=4*48,
-                    channels=3,
-                    dim_head=48)
+    print("creating model :efficientformer_l1")
+    model = create_model(
+        args.model,
+        num_classes=args.nb_classes,
+        distillation=(args.distillation_type != 'none'),
+        pretrained=args.eval,
+        fuse=args.eval,
+    )
 
     model.to(device)
 
@@ -618,8 +616,9 @@ if __name__ == '__main__':
     args.mixup = 0.0
     args.cutmix = 0.0
     args.word_size = 4
-    args.batch_size = 64
+    args.batch_size = 128
     #args.model = 'SwiftFormer_L1'
+    args.model = 'efficientformer_l1'
     print("args",args)
 
     main(args)
